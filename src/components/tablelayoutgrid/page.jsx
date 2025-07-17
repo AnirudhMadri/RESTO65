@@ -3,18 +3,23 @@
 import { useState } from "react";
 import {
   DndContext,
-  useDraggable,
   useSensor,
   useSensors,
   MouseSensor,
+  useDraggable,
 } from "@dnd-kit/core";
 
-const DraggableTable = ({ id, position, onDragEnd }) => {
+const DraggableTable = ({ id, position, removeTable }) => {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({ id });
 
-  // Add live dragging offset to stored position
   const x = (transform?.x ?? 0) + position.x;
   const y = (transform?.y ?? 0) + position.y;
+
+  const handleRemove = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    removeTable(id);
+  };
 
   return (
     <div
@@ -27,6 +32,15 @@ const DraggableTable = ({ id, position, onDragEnd }) => {
         top: `${y}px`,
       }}
     >
+      <button
+        onMouseDown={handleRemove}
+        onClick={handleRemove}
+        onPointerDown={handleRemove}
+        className="absolute -top-2 -right-2 bg-red-600 hover:bg-red-700 text-white w-5 h-5 text-xs flex items-center justify-center rounded-full shadow cursor-pointer z-10"
+        style={{ pointerEvents: "auto" }}
+      >
+        ✕
+      </button>
       Table
     </div>
   );
@@ -37,10 +51,16 @@ export default function DraggableGridWithMemory() {
 
   const sensors = useSensors(useSensor(MouseSensor));
 
+  const removeTable = (idToRemove) => {
+    setTables((prevTables) =>
+      prevTables.filter((table) => table.id !== idToRemove)
+    );
+  };
+
   const addTable = () => {
     const newTable = {
       id: `table-${Date.now()}`,
-      position: { x: 300, y: 200 }, // Default center-like position
+      position: { x: 300, y: 200 },
     };
     setTables((prev) => [...prev, newTable]);
   };
@@ -96,6 +116,7 @@ export default function DraggableGridWithMemory() {
               key={table.id}
               id={table.id}
               position={table.position}
+              removeTable={removeTable}
             />
           ))}
         </DndContext>

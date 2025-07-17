@@ -4,6 +4,7 @@ import { useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import Header from "@/components/header/page";
+import "@/styles/spinner.css";
 
 export default function PinLoginPage() {
   const [pin, setPin] = useState("");
@@ -61,22 +62,28 @@ export default function PinLoginPage() {
         >
           {loading ? (
             <svg
-              className="animate-spin h-5 w-5 text-white"
+              width="24"
+              height="24"
               viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
             >
               <circle
-                className="opacity-25"
+                className="text-white spinner_qM83"
+                cx="4"
+                cy="12"
+                r="3"
+              />
+              <circle
+                className="text-white spinner_qM83 spinner_oXPr"
                 cx="12"
                 cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-                fill="none"
+                r="3"
               />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+              <circle
+                className="text-white spinner_qM83 spinner_ZTLf"
+                cx="20"
+                cy="12"
+                r="3"
               />
             </svg>
           ) : success ? (
