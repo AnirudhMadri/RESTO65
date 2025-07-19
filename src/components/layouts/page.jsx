@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import LayoutCanvas from "@/components/layouts/layoutcanvas";
 import TableLayout from "@/components/tablelayoutgrid/page";
 import { supabase } from "@/utils/supabaseClient";
@@ -15,26 +15,66 @@ export default function Layout() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [deleteStatus, setDeleteStatus] = useState("idle"); // "idle" | "loading" | "done"
+  useEffect(() => {
+    fetchLayouts();
+  }, []);
+  const fetchLayouts = async () => {
+    const { data, error } = await supabase.from("layouts").select("*");
+    if (error) {
+      console.error("Error fetching layouts:", error.message);
+    } else {
+      const layoutNames = data.map((layout) => layout.name);
+      setLayouts(layoutNames);
+    }
+  };
 
   return (
     <div>
       <p className="text-white text-2xl mb-3 bg-purple-500 rounded-sm p-5 font-black">
         Table and Floor Plan
       </p>
-      <div className="w-full grid grid-cols-[20%_80%] bg-gray-100">
-        <div className="rounded-sm p-4 mr-2 border-2 border-gray-300 h-full">
+      <div className="w-full grid grid-cols-[20%_80%] ">
+        <div className="rounded-sm  mr-4  h-full">
           <button
             onClick={() => {
               const nextNumber = layouts.length + 1;
               const newLayout = `Layout ${nextNumber}`;
               setLayouts([...layouts, newLayout]);
-              setShowCanvas(true);
             }}
             className="text-black flex border-2 items-center gap-2 mt-3 rounded-sm w-full bg-blue-50 border-blue-600 font-bold p-4 hover:bg-blue-100 hover:cursor-pointer"
           >
             + Add New Layout
           </button>
-          <hr className="w-[90%] border-t border-gray-300 mx-auto my-4" />
+          <p className=" my-2 text-black font-bold text-center">or</p>
+          <button
+            onClick={async () => {
+              const { data, error } = await supabase
+                .from("layouts")
+                .select("*");
+
+              if (error) {
+                alert("Error loading layouts: " + error.message);
+              } else {
+                console.log("Loaded layout rows:", data);
+                // You’ll get an array of objects, each object is a full row like:
+                // {
+                //   name: "Layout 1",
+                //   tables: 2,
+                //   table_capacity: [4, 2],
+                //   table_location: [{x: 100, y: 150}, {x: 300, y: 200}],
+                //   table_id: ["Table 1", "Table 2"]
+                // }
+              }
+            }}
+            className="text-black flex border-2 items-center gap-2 mt-3 rounded-sm w-full bg-yellow-50 border-yellow-600 font-bold p-4 hover:bg-yellow-100 hover:cursor-pointer"
+          >
+            Load layouts
+          </button>
+          <hr className="w-[90%] border-t border-gray-300 mx-auto mt-4" />
+
+          <p className="w-full text-lg  overflow-hidden p-2 font-bold text-black">
+            View layouts:
+          </p>
 
           <div className="border-2 border-gray-300 rounded-sm ">
             <p className="w-full text-sm bg-gray-200 overflow-hidden p-2 font-bold text-black">
@@ -45,27 +85,14 @@ export default function Layout() {
                 <div key={idx} className="w-full">
                   <hr className="w-full border-t border-gray-300 mx-auto" />
                   <button
-                    onClick={() =>
-                      setActiveLayoutIdx(activeLayoutIdx === idx ? null : idx)
-                    }
-                    className="w-full text-left text-sm text-black font-bold p-2 hover:cursor-pointer"
+                    onClick={() => {
+                      setShowCanvas(true);
+                      setActiveLayoutIdx(activeLayoutIdx === idx ? null : idx);
+                    }}
+                    className="w-full hover:bg-gray-50 text-left text-sm text-black font-bold p-2 hover:cursor-pointer"
                   >
                     {layout}
                   </button>
-
-                  {activeLayoutIdx === idx && (
-                    <div className="flex gap-2 font-medium px-2 pb-2">
-                      <button className="text-xs bg-green-500 px-2 py-1 rounded">
-                        Save
-                      </button>
-                      <button className="text-xs bg-yellow-500 px-2 py-1 rounded">
-                        Edit
-                      </button>
-                      <button className="text-xs bg-red-500 px-2 py-1 rounded">
-                        Delete
-                      </button>
-                    </div>
-                  )}
                 </div>
               ))}
             </div>
@@ -91,6 +118,7 @@ export default function Layout() {
                           tables: layoutInfo.length,
                           table_capacity: layoutInfo.map((t) => t.capacity),
                           table_location: layoutInfo.map((t) => t.position),
+                          table_id: layoutInfo.map((t) => t.id),
                         },
                       ]);
 
@@ -176,7 +204,9 @@ export default function Layout() {
             {showCanvas ? (
               <TableLayout onTableUpdate={setLayoutInfo} />
             ) : (
-              <p className="text-gray-600 font-bold">No Layout Loaded</p>
+              <p className="text-gray-600 font-bold p-4">
+                Select a layout to load
+              </p>
             )}
           </div>
         </div>
