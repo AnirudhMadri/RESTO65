@@ -12,9 +12,13 @@ export default function Layout() {
   const [selectedLayout, setSelectedLayout] = useState(null);
   const [activeLayoutIdx, setActiveLayoutIdx] = useState(null);
   const [layoutInfo, setLayoutInfo] = useState([]);
+  const [loadedLayout, setLoadedLayout] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [deleteStatus, setDeleteStatus] = useState("idle"); // "idle" | "loading" | "done"
+  const [initialTables, setInitialTables] = useState([]);
+
+  /*
   useEffect(() => {
     fetchLayouts();
   }, []);
@@ -27,7 +31,7 @@ export default function Layout() {
       setLayouts(layoutNames);
     }
   };
-
+*/
   return (
     <div>
       <p className="text-white text-2xl mb-3 bg-purple-500 rounded-sm p-5 font-black">
@@ -35,6 +39,10 @@ export default function Layout() {
       </p>
       <div className="w-full grid grid-cols-[20%_80%] ">
         <div className="rounded-sm  mr-4  h-full">
+          <p className=" my-2 text-black text-lg font-bold ">
+            Add layouts here:
+          </p>
+          <hr className="w-[90%] border-t border-gray-300 mx-auto mt-4" />
           <button
             onClick={() => {
               const nextNumber = layouts.length + 1;
@@ -51,11 +59,25 @@ export default function Layout() {
               const { data, error } = await supabase
                 .from("layouts")
                 .select("*");
+              console.log(data);
 
               if (error) {
                 alert("Error loading layouts: " + error.message);
               } else {
-                console.log("Loaded layout rows:", data);
+                const loadedLayoutNames = data.map((layout) => layout.name);
+                setLayouts(loadedLayoutNames);
+                const layout = data[0];
+                const tableIds = JSON.parse(layout.table_id);
+                const capacities = JSON.parse(layout.table_capacity);
+                const positions = JSON.parse(layout.table_location);
+                const parsedTables = tableIds.map((id, index) => ({
+                  id,
+                  capacity: capacities[index],
+                  position: positions[index],
+                }));
+                console.log(parsedTables);
+                setInitialTables(parsedTables);
+
                 // You’ll get an array of objects, each object is a full row like:
                 // {
                 //   name: "Layout 1",
@@ -202,7 +224,10 @@ export default function Layout() {
 
           <div className=" h-full">
             {showCanvas ? (
-              <TableLayout onTableUpdate={setLayoutInfo} />
+              <TableLayout
+                onTableUpdate={setLayoutInfo}
+                initialTables={initialTables}
+              />
             ) : (
               <p className="text-gray-600 font-bold p-4">
                 Select a layout to load

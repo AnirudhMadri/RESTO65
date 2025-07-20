@@ -70,7 +70,10 @@ const DraggableTable = ({
   );
 };
 
-export default function DraggableGridWithMemory({ onTableUpdate }) {
+export default function DraggableGridWithMemory({
+  onTableUpdate,
+  initialTables,
+}) {
   const [tables, setTables] = useState([]);
   const [selectedTableId, setSelectedTableId] = useState(null);
   useEffect(() => {
@@ -78,6 +81,11 @@ export default function DraggableGridWithMemory({ onTableUpdate }) {
       onTableUpdate(tables);
     }
   }, [tables, onTableUpdate]);
+  useEffect(() => {
+    if (initialTables) {
+      setTables(initialTables);
+    }
+  }, [initialTables]);
 
   // Configure mouse sensor to require a minimum distance before dragging starts
   const sensors = useSensors(
