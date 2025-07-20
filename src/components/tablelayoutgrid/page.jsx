@@ -116,6 +116,9 @@ export default function DraggableGridWithMemory({
 
   const handleClickTable = (id) => {
     setSelectedTableId(id);
+    const clickedTable = tables.find((table) => table.id === id);
+    console.log("Clicked table:", clickedTable);
+    console.log("All tables:", tables);
   };
 
   const setCapacity = () => {
@@ -149,6 +152,7 @@ export default function DraggableGridWithMemory({
             position: snapped,
           };
         }
+
         return table;
       })
     );

@@ -18,20 +18,6 @@ export default function Layout() {
   const [deleteStatus, setDeleteStatus] = useState("idle"); // "idle" | "loading" | "done"
   const [initialTables, setInitialTables] = useState([]);
 
-  /*
-  useEffect(() => {
-    fetchLayouts();
-  }, []);
-  const fetchLayouts = async () => {
-    const { data, error } = await supabase.from("layouts").select("*");
-    if (error) {
-      console.error("Error fetching layouts:", error.message);
-    } else {
-      const layoutNames = data.map((layout) => layout.name);
-      setLayouts(layoutNames);
-    }
-  };
-*/
   return (
     <div>
       <p className="text-white text-2xl mb-3 bg-purple-500 rounded-sm p-5 font-black">
@@ -110,6 +96,7 @@ export default function Layout() {
                     onClick={() => {
                       setShowCanvas(true);
                       setActiveLayoutIdx(activeLayoutIdx === idx ? null : idx);
+                      console.log("Layout Info", layoutInfo);
                     }}
                     className="w-full hover:bg-gray-50 text-left text-sm text-black font-bold p-2 hover:cursor-pointer"
                   >
@@ -134,18 +121,69 @@ export default function Layout() {
 
                       const layoutName = layouts[activeLayoutIdx];
 
-                      const { error } = await supabase.from("layouts").insert([
-                        {
-                          name: layoutName,
-                          tables: layoutInfo.length,
-                          table_capacity: layoutInfo.map((t) => t.capacity),
-                          table_location: layoutInfo.map((t) => t.position),
-                          table_id: layoutInfo.map((t) => t.id),
-                        },
-                      ]);
+                      const { data: existingLayouts, error: fetchError } =
+                        await supabase
+                          .from("layouts")
+                          .select("id")
+                          .eq("name", layoutName);
 
-                      if (error) {
-                        alert("Error saving layout: " + error.message);
+                      if (fetchError) {
+                        alert(
+                          "Error checking existing layouts: " +
+                            fetchError.message
+                        );
+                        return;
+                      }
+
+                      const layoutData = {
+                        name: layoutName,
+                        tables: layoutInfo.length,
+                        table_capacity: JSON.stringify(
+                          layoutInfo.map((t) => t.capacity)
+                        ),
+                        table_location: JSON.stringify(
+                          layoutInfo.map((t) => t.position)
+                        ),
+                        table_id: JSON.stringify(layoutInfo.map((t) => t.id)),
+                      };
+
+                      let result;
+                      if (existingLayouts.length > 0) {
+                        const layoutId = existingLayouts[0].id;
+
+                        result = await supabase
+                          .from("layouts")
+                          .update(layoutData)
+                          .eq("id", layoutId);
+
+                        console.log("Update result:", result);
+
+                        // Fetch updated row
+                        const {
+                          data: updatedLayoutRow,
+                          error: updatedLayoutError,
+                        } = await supabase
+                          .from("layouts")
+                          .select("*")
+                          .eq("id", layoutId)
+                          .single();
+
+                        if (updatedLayoutError) {
+                          console.error(
+                            "Error fetching updated layout row:",
+                            updatedLayoutError.message
+                          );
+                        } else {
+                          console.log("Updated layout row:", updatedLayoutRow);
+                        }
+                      } else {
+                        result = await supabase
+                          .from("layouts")
+                          .insert([layoutData]);
+                      }
+
+                      if (result.error) {
+                        alert("Error saving layout: " + result.error.message);
                       } else {
                         alert("Layout saved to Supabase!");
                       }
