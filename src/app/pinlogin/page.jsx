@@ -37,7 +37,7 @@ export default function PinLoginPage() {
       <Header />
       <div className="bg-white p-8 rounded-xl shadow-md w-full max-w-sm">
         <h2 className="text-2xl text-black font-bold mb-4 text-center">
-          Enter 4-Digit PIN
+          Enter PIN
         </h2>
         <input
           type="password"

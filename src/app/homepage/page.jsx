@@ -5,6 +5,7 @@ import axios from "axios";
 import Header from "@/components/header/page";
 import Sidebar from "@/components/sidebar/page";
 import Layout from "@/components/layouts/page";
+import Menu from "@/components/menu/page";
 
 export default function HomePage() {
   const [activeComponent, setActiveComponent] = useState(null);
@@ -24,6 +25,8 @@ export default function HomePage() {
         <div className=" mx-3 mt-5  ">
           {activeComponent === "layouts" ? (
             <Layout />
+          ) : activeComponent === "menu" ? (
+            <Menu />
           ) : (
             <p className="text-black">No Layouts Added</p>
           )}
