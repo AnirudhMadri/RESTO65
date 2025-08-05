@@ -8,7 +8,7 @@ import Layout from "@/components/layouts/page";
 import Menu from "@/components/menu/page";
 
 export default function HomePage() {
-  const [activeComponent, setActiveComponent] = useState(null);
+  const [activeComponent, setActiveComponent] = useState("layouts");
   return (
     <div className="bg-white min-h-screen">
       {/* Header stays on top */}
