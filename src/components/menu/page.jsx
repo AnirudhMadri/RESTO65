@@ -18,6 +18,21 @@ export default function page() {
   const [specials, setSpecials] = useState(false);
   const [month, setMonth] = useState("");
   const [selectedDay, setSelectedDay] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [dailyItems, setDailyItems] = useState({});
+  const [selectedData, setSelectedData] = useState(null);
+  const year = 2025;
+
+  const makeDate = (day) => {
+    if (month == null || year == null || day == null) {
+      console.error("Missing date parts:", { month, year, day });
+      return;
+    }
+    const formattedMonth = month.toString().padStart(2, "0");
+    const formattedDay = day.toString().padStart(2, "0");
+    const finalDate = `${year}-${formattedMonth}-${formattedDay}`;
+    return finalDate;
+  };
 
   useEffect(() => {
     if (category) {
@@ -73,6 +88,85 @@ export default function page() {
     { name: "Beverages" },
     { name: "Snacks" },
   ]);
+  useEffect(() => {
+    console.log(selectedDay); // runs every time selectedDay changes
+  }, [selectedDay]);
+
+  const handleAddSpecial = async (day) => {
+    const dateString = makeDate(day);
+    if (!dateString) alert("No date fixed!");
+
+    const { data, error } = await supabase.from("weekly_specials").insert([
+      {
+        name: name,
+        date: dateString,
+        description: desc,
+        category: type, // your type maps to category
+        price: price,
+      },
+    ]);
+    if (error) {
+      console.error("Error inserting item: ", error);
+    } else {
+      console.log("Item inserted! ", data);
+    }
+    setName("");
+    setDesc("");
+    setPrice("");
+    setType("");
+
+    fetchWeeklyItems();
+  };
+
+  const fetchWeeklyItems = async () => {
+    const { data, error } = await supabase.from("weekly_specials").select("*");
+    if (error) {
+      console.error("Error fetching items: ", error);
+      return;
+    }
+
+    const itemsByDay = {};
+    data.forEach((item) => {
+      const day = new Date(item.date).getDate();
+      if (!itemsByDay[day]) itemsByDay[day] = [];
+      itemsByDay[day].push({
+        name: item.name,
+        price: item.price,
+        category: item.category,
+      });
+    });
+    setDailyItems(itemsByDay);
+  };
+
+  const monthNames = {
+    "01": "January",
+    "02": "February",
+    "03": "March",
+    "04": "April",
+    "05": "May",
+    "06": "June",
+    "07": "July",
+    "08": "August",
+    "09": "September",
+    10: "October",
+    11: "November",
+    12: "December",
+  };
+
+  useEffect(() => {
+    fetchWeeklyItems();
+  }, []);
+
+  const handleDayClick = (day) => {
+    setSelectedDay(day);
+
+    // Check if that day has data
+    if (dailyItems[day]) {
+      setSelectedData(dailyItems[day]); // fetch that day's special
+    } else {
+      setSelectedData(null); // no special
+    }
+  };
 
   return (
     <div>
@@ -91,7 +185,7 @@ export default function page() {
               <select
                 value={month}
                 onChange={(e) => setMonth(e.target.value)}
-                className="text-sm text-gray-100 mx-2 mb-3 font-medium border-2 border-green-700 hover:cursor-pointer hover:bg-green-600 bg-green-500 px-3 py-1 rounded"
+                className="text-sm text-gray-100 mx-2 mb-3 font-medium border-2 border-green-600 hover:cursor-pointer  bg-green-400 px-3 py-1 rounded"
               >
                 <option value="">Select Month</option>
                 <option value="01">January</option>
@@ -113,16 +207,16 @@ export default function page() {
               </button>
             </div>
             <div className="flex items-center justify-around">
-              <button className="text-sm text-gray-100 mx-2 mb-3 font-medium border-2 border-green-700 hover:cursor-pointer  hover:bg-green-600 bg-green-500  px-3 py-1 rounded">
+              <button className="text-sm mr-5 font-medium border-2 border-green-600 hover:cursor-pointer  hover:bg-green-500 bg-green-400 text-gray-50 px-3 py-1 rounded">
                 Add/Edit
               </button>
-              <button className="text-sm text-gray-100 mx-2 mb-3 font-medium border-2 border-red-700 hover:cursor-pointer  hover:bg-red-600 bg-red-500  px-3 py-1 rounded">
+              <button className="text-sm mr-5 font-medium border-2 border-red-600 hover:cursor-pointer  hover:bg-red-500 bg-red-400 text-gray-50 px-3 py-1 rounded">
                 Remove
               </button>
             </div>
           </div>
           <p className="text-2xl my-3 font-medium text-start text-black ">
-            {month || "Select a month"}
+            {month ? monthNames[month] : "Select a month"}
           </p>
           <hr className="w-full my-2 mx-auto border-gray-400" />
 
@@ -131,7 +225,7 @@ export default function page() {
             {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
               <div
                 key={day}
-                className="text-center font-semibold aspect-square flex items-center justify-center"
+                className="text-center font-semibold text-2xl aspect-square flex items-center justify-center"
               >
                 {day}
               </div>
@@ -142,29 +236,178 @@ export default function page() {
               Array.from({ length: 7 }).map((_, dayIdx) => {
                 const dayNumber = weekIdx * 7 + dayIdx + 1;
                 const isSelected = selectedDay === dayNumber;
+                const items = dailyItems[dayNumber] || [];
+
+                const hasItem = dailyItems[dayNumber] !== undefined;
 
                 return (
                   <button
                     key={`${weekIdx}-${dayIdx}`}
-                    className={`aspect-square rounded border-2 flex items-center justify-center ${
+                    className={`aspect-square rounded border-2 flex items-start justify-start p-1 ${
                       isSelected
-                        ? "bg-blue-400 border-blue-600 text-white"
+                        ? "bg-blue-200 border-blue-300 text-black"
+                        : hasItem
+                        ? "bg-yellow-100 border-yellow-300 text-black"
                         : "bg-gray-200 border-gray-300 hover:bg-gray-300 hover:border-gray-400"
                     }`}
                     onClick={() => {
                       setSelectedDay(dayNumber);
-                      console.log("Selected Day:", dayNumber);
+                      if (dailyItems[dayNumber]) {
+                        const existing = dailyItems[dayNumber];
+                        setName(existing.name || "");
+                        setDesc(existing.description || "");
+                        setPrice(existing.price || "");
+                        setType(existing.category || "");
+                      } else {
+                        // reset if empty
+                        setName("");
+                        setDesc("");
+                        setPrice("");
+                        setType("");
+                      }
+                      setIsModalOpen(true);
                     }}
                   >
-                    {dayNumber}
+                    <div className="flex flex-col items-start justify-center">
+                      {dayNumber}
+
+                      {items.map((item, idx) => (
+                        <div
+                          key={idx}
+                          className="text-xs mt-1 ml-1 flex flex-col justify-center items-start"
+                        >
+                          <div className="text-md font-bold">{item.name}</div>
+                          <div className="text-md font-bold">₹{item.price}</div>
+                          <div className="text-md font-bold">
+                            {item.category}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </button>
                 );
               })
             )}
           </div>
 
+          {isModalOpen && (
+            <>
+              <div
+                className="fixed inset-0 bg-opacity-40 backdrop-blur-xs z-40 "
+                onClick={() => setIsModalOpen(false)}
+              ></div>
+
+              <div className="fixed inset-0 flex items-center justify-center text-black z-50">
+                <div className="bg-gray-200 border border-gray-300  rounded-lg shadow-lg w-96">
+                  <p className="text-xl font-bold my-2 mx-2">
+                    {selectedDay}/{month}/2025
+                  </p>
+                  <div className="bg-white p-3 rounded-b-lg w-full">
+                    <div className="p-4">
+                      <label className="text-sm font-medium text-gray-700 mb-1 block">
+                        Name
+                      </label>
+                      <input
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        type="text"
+                        className="w-full border-b border-gray-300 focus:outline-none focus:border-blue-500 p-1 text-black font-medium"
+                      />
+                      <label className="text-sm font-medium text-gray-700 mt-3 block">
+                        Description
+                      </label>
+                      <input
+                        value={desc}
+                        onChange={(e) => setDesc(e.target.value)}
+                        type="textarea"
+                        className="w-full border-b border-gray-300 text-black font-medium focus:outline-none focus:border-blue-500 p-1"
+                      />
+                      <label className="text-sm font-medium text-gray-700 mt-3 block">
+                        Price
+                      </label>
+                      <input
+                        value={price}
+                        onChange={(e) => setPrice(e.target.value)}
+                        type="text"
+                        className="w-full border-b text-black font-medium border-gray-300 focus:outline-none focus:border-blue-500 p-1"
+                      />
+
+                      <label className="text-sm font-medium text-gray-700 mt-3 block">
+                        Category
+                      </label>
+                      <select
+                        value={type}
+                        onChange={(e) => setType(e.target.value)}
+                        className="text-sm text-gray-800 mx-2 my-3 font-medium border-2 border-gray-300 hover:cursor-pointer bg-white px-3 py-1 rounded"
+                      >
+                        <option value="" disabled>
+                          Select Category
+                        </option>
+                        {categories.map((cat, idx) => (
+                          <option key={idx} value={cat.name}>
+                            {cat.name}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="flex gap-4 mt-5">
+                        <label className="flex items-center font-medium gap-2 text-gray-700">
+                          <input
+                            type="radio"
+                            name="type"
+                            value="veg"
+                            checked={type === "veg"}
+                            onChange={(e) => setType(e.target.value)}
+                            className="accent-green-600"
+                          />
+                          Veg
+                        </label>
+                        <label className="flex items-center font-medium gap-2 text-gray-700">
+                          <input
+                            type="radio"
+                            name="type"
+                            value="nonveg"
+                            checked={type === "nonveg"}
+                            onChange={(e) => setType(e.target.value)}
+                            className="accent-red-600"
+                          />
+                          Non-Veg
+                        </label>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          await handleAddSpecial(selectedDay); // Wait for the item to be added
+                          setIsModalOpen(false); // Then close the form
+                        }}
+                        className="text-sm mr-5 mt-5 w-full font-medium border-2 border-blue-600 hover:cursor-pointer  hover:bg-blue-500 bg-blue-400 text-gray-50 px-3 py-1 rounded"
+                      >
+                        Add
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setName("");
+                          setDesc("");
+                          setPrice("");
+                          setType("");
+                          setIsModalOpen(false); // Then close the form
+                        }}
+                        className="text-sm mr-5 mt-5 w-full font-medium border-2 border-red-600 hover:cursor-pointer  hover:bg-red-500 bg-red-400 text-gray-50 px-3 py-1 rounded"
+                      >
+                        Close
+                      </button>
+                    </div>
+                  </div>
+                  {/* Date Header */}
+
+                  {/* Basic Form */}
+                </div>
+              </div>
+            </>
+          )}
+
           <button
-            className="mt-5 bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 py-2 rounded"
+            className="text-sm text-gray-100 mx-5 mt-5 font-medium border-2 border-blue-700 hover:cursor-pointer  hover:bg-blue-600 bg-blue-500  px-3 py-1 rounded"
             onClick={() => setSpecials(false)}
           >
             Back to Menu
