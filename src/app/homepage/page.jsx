@@ -6,6 +6,7 @@ import Header from "@/components/header/page";
 import Sidebar from "@/components/sidebar/page";
 import Layout from "@/components/layouts/page";
 import Menu from "@/components/menu/page";
+import Orders from "@/components/orders/page";
 
 export default function HomePage() {
   const [activeComponent, setActiveComponent] = useState("layouts");
@@ -27,6 +28,8 @@ export default function HomePage() {
             <Layout />
           ) : activeComponent === "menu" ? (
             <Menu />
+          ) : activeComponent === "orders" ? (
+            <Orders />
           ) : (
             <p className="text-black">No Layouts Added</p>
           )}

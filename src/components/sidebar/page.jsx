@@ -17,7 +17,10 @@ export default function Sidebar({ setActiveComponent }) {
           Table and Floor Plan
         </button>
 
-        <button className="flex items-center gap-2 mt-3 rounded-sm border-2 w-[90%] bg-gray-100 border-purple-200 font-bold p-4 hover:bg-gray-200 hover:cursor-pointer">
+        <button
+          onClick={() => setActiveComponent("orders")}
+          className="flex items-center gap-2 mt-3 rounded-sm border-2 w-[90%] bg-gray-100 border-purple-200 font-bold p-4 hover:bg-gray-200 hover:cursor-pointer"
+        >
           <FaChair className="text-3xl text-purple-500 " />
           Orders
         </button>
