@@ -323,13 +323,15 @@ export default function Layout() {
           </div>
           <div className="grid grid-cols-2 gap-4 w-full p-4">
             {/* Left - Current Orders */}
-            <div className="bg-white border-2 border-gray-300 rounded p-4">
-              <h2 className="text-lg font-bold text-gray-700 mb-2">
+            <div className="bg-gray-300 border-2 border-gray-300 rounded-t-md ">
+              <h2 className="text-lg font-bold text-gray-700 mx-2 my-2">
                 Current Orders
               </h2>
               {/* Current orders content goes here */}
               {orders.length === 0 ? (
-                <p className="text-gray-500 text-sm">No orders yet.</p>
+                <p className="text-gray-500 bg-white p-2 text-sm">
+                  No orders yet.
+                </p>
               ) : (
                 <div className="space-y-3">
                   {orders.map((order, idx) => (
@@ -338,7 +340,7 @@ export default function Layout() {
                       onClick={() =>
                         setExpandedOrder(expandedOrder === idx ? null : idx)
                       }
-                      className="border border-gray-300 rounded-lg p-3 bg-gray-50 cursor-pointer"
+                      className="border border-gray-300  p-3 bg-gray-50 cursor-pointer"
                     >
                       <p className="font-semibold text-gray-700">
                         {order.tableId} — {order.item} × {order.quantity}
@@ -356,9 +358,20 @@ export default function Layout() {
                           type="button"
                           onClick={() => {
                             setCompletedOrders((prev) => [...prev, order]);
-                            setOrders((prev) =>
-                              prev.filter((_, i) => i !== idx)
-                            );
+                            setOrders((prev) => {
+                              const updated = prev.filter((_, i) => i !== idx);
+                              const hasOrders = updated.some(
+                                (o) => o.tableId === order.tableId
+                              );
+                              if (!hasOrders) {
+                                setTableStatuses((prevStatuses) => ({
+                                  ...prevStatuses,
+                                  [order.tableId]: "served",
+                                }));
+                              }
+                              return updated;
+                            });
+
                             setExpandedOrder(null);
                           }}
                           className="text-sm mr-5 mt-5 w-full font-medium border-2 border-blue-600 hover:cursor-pointer  hover:bg-blue-500 bg-blue-400 text-gray-50 px-3 py-1 rounded"
@@ -373,18 +386,20 @@ export default function Layout() {
             </div>
 
             {/* Right - Completed Orders */}
-            <div className="bg-white border-2 border-gray-300 rounded p-4">
-              <h2 className="text-lg font-bold text-gray-700 mb-2">
+            <div className="bg-gray-300 border-2 border-gray-300 rounded-t-md">
+              <h2 className="text-lg font-bold text-gray-700 mx-2 my-2">
                 Completed Orders
               </h2>
               {completedOrders.length === 0 ? (
-                <p className="text-gray-500 text-sm">No completed orders.</p>
+                <p className="text-gray-500 bg-white p-2 text-sm">
+                  No completed orders.
+                </p>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-3 bg-white">
                   {completedOrders.map((order, idx) => (
                     <div
                       key={idx}
-                      className="border border-gray-300 rounded-lg p-3 bg-green-50"
+                      className="border border-gray-300  p-3 bg-green-50"
                     >
                       <p className="font-semibold text-gray-700">
                         {order.tableId} — {order.item} × {order.quantity}
